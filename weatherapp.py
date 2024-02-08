@@ -1,12 +1,10 @@
-import warnings # For annoying version warning
-warnings.filterwarnings("ignore", message="Tuple timeout setting is deprecated")
-
 import click
 import requests
 import os
 import matplotlib.pyplot as plt
 from io import BytesIO
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+
 
 KEY= os.getenv("API_KEY") # Get the API key from the environment variable
 URL= "https://api.openweathermap.org/data/2.5/forecast?"
@@ -21,7 +19,6 @@ def get_weather(city):
     request_url = f"{URL}q={city}&appid={KEY}&units=metric"
     # Make the request
     response = requests.get(request_url)
-    
     # Check if the request was successful and print the weather
     if response.status_code == 200:
         # Parses weather data for plotting
@@ -45,6 +42,7 @@ def get_weather(city):
         blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=f"{city}_weatherplot.png")
         blob_client.upload_blob(bytes_io, overwrite=True) # Overwrites duplicates
         
+        
         # Provides URL to access the plot
         blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{city}_weatherplot.png"
         click.echo(f"Weather plot created for {city}. You can access it here: {blob_url}")
@@ -57,7 +55,7 @@ def get_weather(city):
   
   
 # Run the command  
-if __name__ == '__main__':
+if __name__ == '__main__':    
     print(f"API_KEY: {KEY}")
     print(f"Storage Connection String: {STORAGE_CONNECTION_STRING}")
     print(f"Container Name: {CONTAINER_NAME}")
