@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore")
+
 import click
 import requests
 import os
