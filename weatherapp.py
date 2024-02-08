@@ -1,16 +1,13 @@
-import warnings
-warnings.filterwarnings("ignore")
-
 import click
 import requests
 import os
 import matplotlib.pyplot as plt
 from io import BytesIO
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+import json
 
 
 KEY= os.getenv("API_KEY") # Get the API key from the environment variable
-URL= "https://api.openweathermap.org/data/2.5/forecast?"
 STORAGE_CONNECTION_STRING = os.getenv("STORAGE_CONNECTION_STRING") # Get the storage connection string from the environment variable
 CONTAINER_NAME = os.getenv("CONTAINER_NAME") # Get the container name from the environment variable
 
@@ -19,20 +16,22 @@ CONTAINER_NAME = os.getenv("CONTAINER_NAME") # Get the container name from the e
 @click.option('--city', prompt='Your city') # Defines the main prompt
 def get_weather(city):
     # Request URL
-    request_url = f"{URL}q={city}&appid={KEY}&units=metric"
+    request_url = f"https://api.openweathermap.org/data/2.5/forecast/daily?q={city}&cnt=14&appid={KEY}&units=metric" # Forecast
+    request_url2 = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={KEY}&units=metric" # Current weather
     # Make the request
     response = requests.get(request_url)
+    response2 = requests.get(request_url2)
     # Check if the request was successful and print the weather
-    if response.status_code == 200:
+    if response.status_code == 200 and response2.status_code == 200:
         # Parses weather data for plotting
-        temps = [item['main']['temp'] for item in response.json()['list']]
-        
+        temps = [item['temp']['day'] for item in response.json()['list']]
+        weather_data = response2.json()
         # Generate plot
         plt.figure(figsize=(10, 6))
         plt.plot(temps, marker='o')
-        plt.title(f"Temperature Forecast for {city}")
+        plt.title(f"14 Day Temperature Forecast for {city}, {weather_data['sys']['country']}")
         plt.ylabel('Temperature (°C)')
-        plt.xlabel('Time (3-hour intervals)')
+        plt.xlabel('Days from now')
         
         # Save plot to a BytesIO object and rewinds bytes to start
         bytes_io = BytesIO()
@@ -45,16 +44,25 @@ def get_weather(city):
         blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=f"{city}_weatherplot.png")
         blob_client.upload_blob(bytes_io, overwrite=True) # Overwrites duplicates
         
-        
-        # Provides URL to access the plot
+        # Provides URL to access the plot and current weather
         blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{city}_weatherplot.png"
         click.echo(f"Weather plot created for {city}. You can access it here: {blob_url}")
+        click.echo(f"Weather in {city}, {weather_data['sys']['country']}: {weather_data['weather'][0]['description']}")
+        click.echo(f"Temperature: {weather_data['main']['temp']}°C")
+        click.echo(f"Wind: {weather_data['wind']['speed']} m/s")
     
     # Error handling
     elif response.status_code != 200:
-        print("Sorry, there was a problem retrieving the weather")
+        print("Sorry, there was a problem retrieving forecast data")
         print(f"Status code: {response.status_code}")
         return
+    
+    elif response2.status_code != 200:
+        print("Sorry, there was a problem retrieving current weather data")
+        print(f"Status code: {response2.status_code}")
+        return
+    else:
+        print("Unknown error")
   
   
 # Run the command  
