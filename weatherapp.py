@@ -50,6 +50,7 @@ def get_weather(city):
         click.echo(f"Weather in {city}, {weather_data['sys']['country']}: {weather_data['weather'][0]['description']}")
         click.echo(f"Temperature: {weather_data['main']['temp']}°C")
         click.echo(f"Wind: {weather_data['wind']['speed']} m/s")
+        click.echo(f"Next 14 day forecast: {blob_url}")    
     
     # Error handling
     elif response.status_code != 200:
@@ -67,9 +68,5 @@ def get_weather(city):
   
 # Run the command  
 if __name__ == '__main__':    
-    print(f"API_KEY: {KEY}")
-    print(f"Storage Connection String: {STORAGE_CONNECTION_STRING}")
-    print(f"Container Name: {CONTAINER_NAME}")
-
-    print("Enter the city name to get the weather")
+    print("Enter the city name to get the forecast and current weather")
     get_weather()
