@@ -2,3 +2,4 @@ myenv/
 .venv/
 myenv2/
 temp.py
+getweatherdata/
