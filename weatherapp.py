@@ -15,6 +15,7 @@ CONTAINER_NAME = os.getenv("CONTAINER_NAME") # Get the container name from the e
 @click.command() # Defines a command
 @click.option('--city', prompt='Your city') # Defines the main prompt
 def get_weather(city):
+    city = city.lower()
     # Request URL
     request_url = f"https://api.openweathermap.org/data/2.5/forecast/daily?q={city}&cnt=14&appid={KEY}&units=metric" # Forecast
     request_url2 = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={KEY}&units=metric" # Current weather
@@ -42,15 +43,20 @@ def get_weather(city):
         # Upload to Azure Blob Storage
         blob_service_client = BlobServiceClient.from_connection_string(STORAGE_CONNECTION_STRING)
         blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=f"{city}_weatherplot.png")
-        blob_client.upload_blob(bytes_io, overwrite=True) # Overwrites duplicates
+        if blob_client.exists():
+            print_weather_data()
+        else:
+            blob_client.upload_blob(bytes_io)
+            print_weather_data()
         
         # Provides URL to access the plot and current weather
-        blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{city}_weatherplot.png"
-        click.echo(f"Weather plot created for {city}. You can access it here: {blob_url}")
-        click.echo(f"Weather in {city}, {weather_data['sys']['country']}: {weather_data['weather'][0]['description']}")
-        click.echo(f"Temperature: {weather_data['main']['temp']}°C")
-        click.echo(f"Wind: {weather_data['wind']['speed']} m/s")
-        click.echo(f"Next 14 day forecast: {blob_url}")    
+        def print_weather_data():
+            blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{city}_weatherplot.png"
+            click.echo(f"Weather plot created for {city}. You can access it here: {blob_url}")
+            click.echo(f"Weather in {city}, {weather_data['sys']['country']}: {weather_data['weather'][0]['description']}")
+            click.echo(f"Temperature: {weather_data['main']['temp']}°C")
+            click.echo(f"Wind: {weather_data['wind']['speed']} m/s")
+            click.echo(f"Next 14 day forecast: {blob_url}")    
     
     # Error handling
     elif response.status_code != 200:
@@ -65,7 +71,7 @@ def get_weather(city):
     else:
         print("Unknown error")
   
-  
+
 # Run the command  
 if __name__ == '__main__':    
     print("Enter the city name to get the forecast and current weather")
