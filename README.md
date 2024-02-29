@@ -23,14 +23,14 @@ git clone <repository_url>
 
 pip install -r requirements.txt
 ```
-2. Setup Azure AI Services:
+2. Setup API:
   - Obtain your key from openweathermap
   - Obtain your container name and connection string from Azure Blob Storage
   - Set the environment variables
 ```bash  
-setx API_KEY=yourkey
-setx STORAGE_CONNECTION_STRING=yourconnectionstring
-setx CONTAINER_NAME=yourcontainername
+set API_KEY=youropenweatherkey
+set STORAGE_CONNECTION_STRING=yourconnectionstring
+set CONTAINER_NAME=yourcontainername
 ```
 ## Customisation
 This application can be customised easily by referring to the openweathermap API documentation and making the changes in the code.
